@@ -1,0 +1,392 @@
+
+
+
+
+Network Working Group                                             Y. Cui
+Internet-Draft                                                    C. Liu
+Intended status: Standards Track                     Tsinghua University
+Expires: December 18, 2014                                 June 16, 2014
+
+
+                 Building Softwire in IPv6 Home Network
+                     draft-liu-homenet-softwire-00
+
+Abstract
+
+   In IPv6 home network, IPv4 service may still be needed for a long
+   time.  ISP can provider IPv4 service through IPv4-over-IPv6 softwire
+   mechanisms, e.g.  Dual-Stack Lite ([RFC6333]).  This document
+   discusses how to build softwires from home routers, especially when
+   there are multiple routers those are running distributed
+   configuration and routing protocols.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on December 18, 2014.
+
+Copyright Notice
+
+   Copyright (c) 2014 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 1]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+   described in the Simplified BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Requirements Language . . . . . . . . . . . . . . . . . . . .   3
+   3.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   4.  Softwire Initiated by Inner Home Router . . . . . . . . . . .   3
+     4.1.  Running DS-Lite . . . . . . . . . . . . . . . . . . . . .   4
+     4.2.  Running MAP . . . . . . . . . . . . . . . . . . . . . . .   4
+     4.3.  Running Lightweight 4over6  . . . . . . . . . . . . . . .   4
+   5.  Softwire Initiated by Edge Router . . . . . . . . . . . . . .   4
+   6.  Softwire Initiated by End Host  . . . . . . . . . . . . . . .   5
+   7.  Discussion  . . . . . . . . . . . . . . . . . . . . . . . . .   5
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .   6
+     10.2.  Informative References . . . . . . . . . . . . . . . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
+
+1.  Introduction
+
+   In IPv6 home network environments, when there are multiple routers,
+   the routers are running distributed configuration and routing
+   protocols.  HNCP ([I-D.stenberg-homenet-hncp]) is designed to
+   configure home routers with IP prefixes and other information
+   including stateless DHCPv6 options provided by ISPs.  OSPFv3
+   ([RFC5340]) is used for IPv6 routing
+
+   As the IPv6 transition takes a long time and large cost, the demand
+   of IPv4 service may still last for a long time and the ISP still
+   needs to provide IPv4 service.  To deal with the shortage of IPv4
+   addresses, several IPv4-over-IPv6 softwire mechanisms are proposed,
+   e.g.  Dual-Stack Lite ([RFC6333]), MAP ([I-D.ietf-softwire-map]), and
+   Lightweight 4over6 ([I-D.ietf-softwire-lw4over6]).  The three
+   mechanisms are similar in many aspects: provisioning specific
+   information by DHCPv6, and IPv4 packets are transported in IPv4-in-
+   IPv6 tunnels.
+
+   When ISP provides dual stack link to the homenet Edge Router, the
+   Edge Router gets IPv4 address and performs NAT.  The other home
+   routers pick private IPv4 prefixes through HNCP, and the homenet runs
+   OSPFv2 ([RFC2328]) to configure IPv4 routing.  When ISP provides
+   IPv6-only link and softwire service instead of dual stack, the same
+   way - private IPv4 prefix + NAT and build softwire on Edge Router -
+   still works.  However, running OSPFv2 adds additional cost to the
+   homenet.  To remove OSPFv2, building softwire from all home routers
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 2]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+   is an alternative solution.  And it's even possible to build softwire
+   from end hosts.
+
+   This document discusses how homenet can build softwires in these
+   methods, and discusses the compatibility with DS-Lite, MAP and
+   Lightweight 4over6.
+
+2.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [RFC2119].
+
+3.  Terminology
+
+   The document defines the following terms:
+
+   Edge Router:   A home router that connects to ISP network.  ISP can
+                  provision stateless DHCPv6 parameters to Edge Routers.
+
+   End Router:    A home router that directly connects to end hosts.
+
+4.  Softwire Initiated by Inner Home Router
+
+   In this section we discuss how to build IPv4-over-IPv6 Softwire from
+   every inner home router that connects to end hosts directly, which we
+   call "End Routers".  If a Edge Router that connects to ISP network
+   also connects to some end hosts, it's also treated as a End Router.
+
+   To build softwire by End Routers, each router must get the
+   information of the softwire, including the IPv6 address of remote
+   tunnel endpoint, and other solution-specific information.  All DS-
+   Lite, MAP and Lightweight 4over6 use DHCPv6 option to provision
+   softwire information.  When the Edge Router receives a DHCPv6
+   response, it advertises the softwire information in DHCPv6 options to
+   all routers through HNCP.  When a inner home router receives the
+   softwire information, it initiates an IPv4-in-IPv6 tunnel.  In some
+   solutions (e.g.  Lightweight 4over6), the router needs to get more
+   information before it builds the tunnel.
+
+   It's possible that the home net connects to multiple ISPs, and each
+   ISP provides its own IPv6 prefix and softwire configuration to the
+   same or different Edge Routers.  In this case, the Edge Router(s)
+   advertise each Softwire configuration to the homenet independently,
+   and each Softwire configuration must be bound to the IPv6 prefix from
+   the same ISP.  The home routers set up their Softwires accordingly,
+   and for each tunnel, the tunnel outer IPv6 addresses and inner IPv4
+   addresses must come the same ISP.
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 3]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+4.1.  Running DS-Lite
+
+   In DS-Lite, all routers gets the AFTR-Name option ([RFC6334]) through
+   HNCP.  Each router chooses a private IPv4 prefix for its end users,
+   and does not need to advertise the prefix to other routers.  The
+   routers build IPv4-in-IPv6 tunnel according to the AFTR-Name option,
+   and routes all IPv4 traffic into the tunnel.  The home routes do not
+   perform NAT44.
+
+4.2.  Running MAP
+
+   In MAP-E, the ISP provides Softwire46 MAP-E Container Option
+   ([I-D.ietf-softwire-map-dhcp]) to the Edge Router.  Then the whole
+   container option is advertised through HNCP.  Each router build MAP
+   tunnel according to the option and its Assigned Prefix.  The Assigned
+   Prefix is treated as End-user prefix, thus the Delegated Prefix from
+   ISP needs to be shorter than the expected End-user prefix, e.g.
+   equals to Rule IPv6 prefix.  The Edge Router calculates its public
+   IPv4 address (and PSID) according to the MAP algorithm.  Then the
+   router performs NAT44, and routes all IPv4 traffic into the tunnel.
+   Since all routers in the homenet shares a single MAP rule, the
+   routers form (possibly part of) a single MAP domain.  The ISP must
+   provide enough IPv4 addresses for the homenet.
+
+4.3.  Running Lightweight 4over6
+
+   In Lightweight 4over6, the S46 IPv4/IPv6 Address Binding
+   Option([I-D.ietf-softwire-map-dhcp]) inside the container option only
+   contains IPv4 address for a single user.  Thus it can not be used for
+   configuring all home routers.  DHCPv4 over DHCPv6 should be used for
+   IPv4 provisioning.  The S46 BR Option([I-D.ietf-softwire-map-dhcp])
+   and 4o6 Server Address Option([I-D.ietf-dhc-dhcpv4-over-dhcpv6]) are
+   received by Edge Router and advertised through HNCP.  After obtained
+   the two options, each router initiates DHCPv4 over DHCPv6 queries to
+   get its IPv4 address, and perform NAT44 on the obtained address.
+
+5.  Softwire Initiated by Edge Router
+
+   IPv4-over-IPv6 Softwire can be initiated by Edge Router directly.
+   ISPs provide their Softwire configuration information to the Edge
+   Routers, and the Edge Routers build their Softwires directly.  After
+   setting up the Softwire successfully, a Edge Router chooses a private
+   IPv4 prefix and advertise it to the homenet.  Edge Routers running
+   DS-Lite do not perform NAT44, and Edge Routers running MAP and
+   Lightweight 4over6 perform NAT44.  Private IPv4 prefix configuration
+   is through HNCP, and OSPFv2 is used for routing.
+
+
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 4]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+6.  Softwire Initiated by End Host
+
+   Softwire can also be initiated by end hosts.  In this case, the Edge
+   Routers advertise the Softwire Configuration information to the
+   homenet as described in Section 3, but the routers do not set up
+   Softwires.  The routers need to configure their LAN side local
+   provisioning protocol (e.g.  DHCPv6) to provision the Softwire
+   information to end hosts, and end hosts set up the tunnels
+   accordingly.
+
+   End host needs to support the Softwire mechanisms.  Since there could
+   be various types of end hosts, including PCs, tablets or phones, and
+   devices may run different OSs, it may not be easy to do this.
+
+7.  Discussion
+
+   In this draft we have discussed three possible scenarios to build
+   IPv4-over-IPv6 Softwire in Homenet.  The purpose of building softwire
+   is to provide legacy IPv4 support for home users, and make it easier
+   to transit the network to IPv6 and possible to shutdown IPv4.
+
+   Building Softwire from Edge Router is a native way that is quite
+   close to dual-stack scenario.  However, it requires IPv4 routing
+   inside the home network, and requires IPv4 routing protocol.  Once
+   IPv4 routing is deployed in the home network, it's difficult to shut
+   it down that even only few end devices require IPv4 service, all home
+   routers need to run IPv4 routing protocol.  It's solved by building
+   softwire from End Routers that IPv4 routing protocol is not required
+   in this case.  Since IPv6 tunnel is built from end routers, there's
+   no IPv4 traffic in the homenet and it could help the monitoring and
+   network management.  IPv4 service can be shut down at each routers,
+   and it will not affect others routers.
+
+   Building Softwire form end hosts is possible, but not easy for large
+   scale deployment because user devices are out of ISP's control.  In
+   most current home networks, there's already boxes from ISP or third-
+   party.  Dealing with routers is much easier for ISP to deploy their
+   network.
+
+   According to the discussions, this draft recommends IPv6 home network
+   to building IPv4-over-IPv6 Softwire from every End Routers, to
+   support IPv4 service.
+
+8.  Security Considerations
+
+   This document does not define a new homenet or softwire mechanism.
+   All the three scenarios are the combination of current mechanisms:
+   HNCP, OSPF, and Softwire mechanisms: DS-Lite, MAP, and Lightweight
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 5]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+   4over6.  Security Considerations in these documents should be
+   considered.
+
+9.  IANA Considerations
+
+   This document does not include an IANA request.
+
+10.  References
+
+10.1.  Normative References
+
+   [I-D.ietf-dhc-dhcpv4-over-dhcpv6]
+              Sun, Q., Cui, Y., Siodelski, M., Krishnan, S., and I.
+              Farrer, "DHCPv4 over DHCPv6 Transport", draft-ietf-dhc-
+              dhcpv4-over-dhcpv6-09 (work in progress), June 2014.
+
+   [I-D.ietf-softwire-lw4over6]
+              Cui, Y., Qiong, Q., Boucadair, M., Tsou, T., Lee, Y., and
+              I. Farrer, "Lightweight 4over6: An Extension to the DS-
+              Lite Architecture", draft-ietf-softwire-lw4over6-10 (work
+              in progress), June 2014.
+
+   [I-D.ietf-softwire-map]
+              Troan, O., Dec, W., Li, X., Bao, C., Matsushima, S.,
+              Murakami, T., and T. Taylor, "Mapping of Address and Port
+              with Encapsulation (MAP)", draft-ietf-softwire-map-10
+              (work in progress), January 2014.
+
+   [I-D.ietf-softwire-map-dhcp]
+              Mrugalski, T., Troan, O., Farrer, I., Perreault, S., Dec,
+              W., Bao, C., leaf.yeh.sdo@gmail.com, l., and X. Deng,
+              "DHCPv6 Options for configuration of Softwire Address and
+              Port Mapped Clients", draft-ietf-softwire-map-dhcp-07
+              (work in progress), March 2014.
+
+   [I-D.stenberg-homenet-hncp]
+              Stenberg, M. and S. Barth, "Home Networking Control
+              Protocol", draft-stenberg-homenet-hncp-00 (work in
+              progress), February 2014.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC6333]  Durand, A., Droms, R., Woodyatt, J., and Y. Lee, "Dual-
+              Stack Lite Broadband Deployments Following IPv4
+              Exhaustion", RFC 6333, August 2011.
+
+
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 6]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+   [RFC6334]  Hankins, D. and T. Mrugalski, "Dynamic Host Configuration
+              Protocol for IPv6 (DHCPv6) Option for Dual-Stack Lite",
+              RFC 6334, August 2011.
+
+10.2.  Informative References
+
+   [RFC2328]  Moy, J., "OSPF Version 2", STD 54, RFC 2328, April 1998.
+
+   [RFC5340]  Coltun, R., Ferguson, D., Moy, J., and A. Lindem, "OSPF
+              for IPv6", RFC 5340, July 2008.
+
+Authors' Addresses
+
+   Yong Cui
+   Tsinghua University
+   Department of Computer Science, Tsinghua University
+   Beijing  100084
+   P.R.China
+
+   Phone: +86-10-62603059
+   Email: yong@csnet1.cs.tsinghua.edu.cn
+
+
+   Cong Liu
+   Tsinghua University
+   Department of Computer Science, Tsinghua University
+   Beijing  100084
+   P.R.China
+
+   Phone: +86-10-6278-5822
+   Email: gnocuil@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cui & Liu               Expires December 18, 2014               [Page 7]
