@@ -5,7 +5,7 @@
 Network Working Group                                             Y. Cui
 Internet-Draft                                                    C. Liu
 Intended status: Standards Track                     Tsinghua University
-Expires: December 18, 2014                                 June 16, 2014
+Expires: December 25, 2014                                 June 23, 2014
 
 
                  Building Softwire in IPv6 Home Network
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on December 18, 2014.
+   This Internet-Draft will expire on December 25, 2014.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Cui & Liu               Expires December 18, 2014               [Page 1]
+Cui & Liu               Expires December 25, 2014               [Page 1]
 
 Internet-Draft             Softwire in Homenet                 June 2014
 
@@ -69,10 +69,11 @@ Table of Contents
      4.1.  Running DS-Lite . . . . . . . . . . . . . . . . . . . . .   4
      4.2.  Running MAP . . . . . . . . . . . . . . . . . . . . . . .   4
      4.3.  Running Lightweight 4over6  . . . . . . . . . . . . . . .   4
-   5.  Softwire Initiated by Edge Router . . . . . . . . . . . . . .   4
+     4.4.  Mesh Mode . . . . . . . . . . . . . . . . . . . . . . . .   4
+   5.  Softwire Initiated by Edge Router . . . . . . . . . . . . . .   5
    6.  Softwire Initiated by End Host  . . . . . . . . . . . . . . .   5
    7.  Discussion  . . . . . . . . . . . . . . . . . . . . . . . . .   5
-   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
    9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
      10.1.  Normative References . . . . . . . . . . . . . . . . . .   6
@@ -105,15 +106,15 @@ Table of Contents
    IPv6-only link and softwire service instead of dual stack, the same
    way - private IPv4 prefix + NAT and build softwire on Edge Router -
    still works.  However, running OSPFv2 adds additional cost to the
-   homenet.  To remove OSPFv2, building softwire from all home routers
 
 
 
-Cui & Liu               Expires December 18, 2014               [Page 2]
+Cui & Liu               Expires December 25, 2014               [Page 2]
 
 Internet-Draft             Softwire in Homenet                 June 2014
 
 
+   homenet.  To remove OSPFv2, building softwire from all home routers
    is an alternative solution.  And it's even possible to build softwire
    from end hosts.
 
@@ -161,14 +162,15 @@ Internet-Draft             Softwire in Homenet                 June 2014
    and each Softwire configuration must be bound to the IPv6 prefix from
    the same ISP.  The home routers set up their Softwires accordingly,
    and for each tunnel, the tunnel outer IPv6 addresses and inner IPv4
-   addresses must come the same ISP.
 
 
 
-Cui & Liu               Expires December 18, 2014               [Page 3]
+Cui & Liu               Expires December 25, 2014               [Page 3]
 
 Internet-Draft             Softwire in Homenet                 June 2014
 
+
+   addresses must come the same ISP.
 
 4.1.  Running DS-Lite
 
@@ -206,6 +208,30 @@ Internet-Draft             Softwire in Homenet                 June 2014
    the two options, each router initiates DHCPv4 over DHCPv6 queries to
    get its IPv4 address, and perform NAT44 on the obtained address.
 
+4.4.  Mesh Mode
+
+   In hub-and-spoke mode of DS-Lite, MAP and Lightweight 4over6, home
+   routers forward all IPv4 traffic to ISP's BR even the communation is
+   between two hosts from the same home network.  Since we suppose IPv6
+   to take place of IPv4 and become the primary internet protocol,
+   softwire based IPv4 service will only be using for legacy
+   applications and will not handle too much traffic inside the homenet,
+   hub-and-spoke mode is acceptable and can work well.
+
+
+
+
+Cui & Liu               Expires December 25, 2014               [Page 4]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
+   In case the user wants direct communication in home network, mesh
+   mode softwire mechanism can be used.  For example, MAP supports mesh
+   mode by provisioning forwarding mapping rule(FMR) to routers.  In
+   mesh mode a home router can send encapsulated packets to another home
+   router directly.
+
 5.  Softwire Initiated by Edge Router
 
    IPv4-over-IPv6 Softwire can be initiated by Edge Router directly.
@@ -216,15 +242,6 @@ Internet-Draft             Softwire in Homenet                 June 2014
    DS-Lite do not perform NAT44, and Edge Routers running MAP and
    Lightweight 4over6 perform NAT44.  Private IPv4 prefix configuration
    is through HNCP, and OSPFv2 is used for routing.
-
-
-
-
-
-Cui & Liu               Expires December 18, 2014               [Page 4]
-
-Internet-Draft             Softwire in Homenet                 June 2014
-
 
 6.  Softwire Initiated by End Host
 
@@ -257,6 +274,14 @@ Internet-Draft             Softwire in Homenet                 June 2014
    in this case.  Since IPv6 tunnel is built from end routers, there's
    no IPv4 traffic in the homenet and it could help the monitoring and
    network management.  IPv4 service can be shut down at each routers,
+
+
+
+Cui & Liu               Expires December 25, 2014               [Page 5]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
    and it will not affect others routers.
 
    Building Softwire form end hosts is possible, but not easy for large
@@ -274,14 +299,6 @@ Internet-Draft             Softwire in Homenet                 June 2014
    This document does not define a new homenet or softwire mechanism.
    All the three scenarios are the combination of current mechanisms:
    HNCP, OSPF, and Softwire mechanisms: DS-Lite, MAP, and Lightweight
-
-
-
-Cui & Liu               Expires December 18, 2014               [Page 5]
-
-Internet-Draft             Softwire in Homenet                 June 2014
-
-
    4over6.  Security Considerations in these documents should be
    considered.
 
@@ -310,6 +327,17 @@ Internet-Draft             Softwire in Homenet                 June 2014
               with Encapsulation (MAP)", draft-ietf-softwire-map-10
               (work in progress), January 2014.
 
+
+
+
+
+
+
+Cui & Liu               Expires December 25, 2014               [Page 6]
+
+Internet-Draft             Softwire in Homenet                 June 2014
+
+
    [I-D.ietf-softwire-map-dhcp]
               Mrugalski, T., Troan, O., Farrer, I., Perreault, S., Dec,
               W., Bao, C., leaf.yeh.sdo@gmail.com, l., and X. Deng,
@@ -328,15 +356,6 @@ Internet-Draft             Softwire in Homenet                 June 2014
    [RFC6333]  Durand, A., Droms, R., Woodyatt, J., and Y. Lee, "Dual-
               Stack Lite Broadband Deployments Following IPv4
               Exhaustion", RFC 6333, August 2011.
-
-
-
-
-
-Cui & Liu               Expires December 18, 2014               [Page 6]
-
-Internet-Draft             Softwire in Homenet                 June 2014
-
 
    [RFC6334]  Hankins, D. and T. Mrugalski, "Dynamic Host Configuration
               Protocol for IPv6 (DHCPv6) Option for Dual-Stack Lite",
@@ -359,6 +378,20 @@ Authors' Addresses
 
    Phone: +86-10-62603059
    Email: yong@csnet1.cs.tsinghua.edu.cn
+
+
+
+
+
+
+
+
+
+
+
+Cui & Liu               Expires December 25, 2014               [Page 7]
+
+Internet-Draft             Softwire in Homenet                 June 2014
 
 
    Cong Liu
@@ -389,4 +422,27 @@ Authors' Addresses
 
 
 
-Cui & Liu               Expires December 18, 2014               [Page 7]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cui & Liu               Expires December 25, 2014               [Page 8]

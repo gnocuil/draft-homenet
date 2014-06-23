@@ -174,6 +174,19 @@
       	</t>
       </section>
       
+      <section title="Mesh Mode">
+        <t>In hub-and-spoke mode of DS-Lite, MAP and Lightweight 4over6, home routers forward all IPv4 traffic to ISP's BR
+           even the communation is between two hosts from the same home network. Since we suppose IPv6 to take place of IPv4
+           and become the primary internet protocol, softwire based IPv4 service will only be using for legacy applications
+           and will not handle too much traffic inside the homenet, hub-and-spoke mode is acceptable and can work well.
+        </t>
+
+        <t>In case the user wants direct communication in home network, mesh mode softwire mechanism can be used.
+           For example, MAP supports mesh mode by provisioning forwarding mapping rule(FMR) to routers.
+           In mesh mode a home router can send encapsulated packets to another home router directly.
+        </t>
+      </section>
+      
     </section>    
 
     <section title="Softwire Initiated by Edge Router">
